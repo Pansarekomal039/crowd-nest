@@ -17,18 +17,15 @@ import {
     Line,
     PageTitle,
 } from '../components/style';
-import { View, TouchableOpacity, ActivityIndicator, Alert, StyleSheet,Text } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, Text } from 'react-native';
 import KeyboardAvoidingWrapper from '../components/KeyboardAvoidingWrapper';
 import PropTypes from 'prop-types';
 import * as yup from 'yup';
 
-// RestProfile.propTypes = {
-//     navigation: PropTypes.object.isRequired,
-// };
 const { brand, darkLight, primary } = Colors;
 
 const formatTime = (date) => {
-    if (!date || !(date instanceof Date) || isNaN(date)) return '';  // Check for invalid Date
+    if (!date || !(date instanceof Date) || isNaN(date)) return '';
     return date.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
@@ -37,40 +34,42 @@ const formatTime = (date) => {
 };
 
 const restProfileSchema = yup.object().shape({
-    fullName: yup.string().required('Restaurent name is required'),
+    fullName: yup.string().required('Restaurant name is required'),
     cuisine: yup.string().required('Cuisine type is required'),
+    openTime: yup.date()
+        .required('Opening time is required')
+        .test(
+            'is-before-close',
+            'Opening time must be before closing time',
+            function (value) {
+                return !this.parent.closeTime || value < this.parent.closeTime;
+            }
+        ),
     closeTime: yup.date()
-  .required('Closing time is required')
-  .test(
-    'is-after-open',
-    'Closing time must be after opening time',
-    function (value) {
-      return value > this.parent.openTime;
-    }
-  ),
-    closeTime: yup.date().required('Closing time is required')
-    .when('openTime', (openTime,schema)=>{
-        return schema.test({
-            test: closeTime => closeTime > openTime,
-        message: 'Closing time must be after opening time'      
-      });
-    }),
+        .required('Closing time is required')
+        .test(
+            'is-after-open',
+            'Closing time must be after opening time',
+            function (value) {
+                return !this.parent.openTime || value > this.parent.openTime;
+            }
+        ),
     street: yup.string().required('Street name is required'),
     city: yup.string().required('City is required'),
     states: yup.string().required('State is required'),
-    pinCode: yup.string().required('pinCode is required')
-    .required('Postal code is required')
-    .matches(/^[0-9]{5}(?:-[0-9]{4})?$/, 'Invalid postal code'),
-    no_of_guest: yup.number().required('Capacity  is required')
-    .min(1, 'Must be at least 1')
-    .integer('must be a whole number'),
+    pinCode: yup.string()
+        .required('Postal code is required')
+        .matches(/^[0-9]{5}(?:-[0-9]{4})?$/, 'Invalid postal code'),
+    no_of_guest: yup.number()
+        .required('Capacity is required')
+        .min(1, 'Must be at least 1')
+        .integer('Must be a whole number'),
     specialRequest: yup.string()
 });
 
 const RestProfile = ({ navigation }) => {
     const [isPickerVisible, setPickerVisibility] = useState(false);
     const [currentPickerType, setCurrentPickerType] = useState('open');
-
     const [address, setAddress] = useState({
         street: '',
         city: '',
@@ -79,20 +78,17 @@ const RestProfile = ({ navigation }) => {
     });
 
     const handleAddressChange = (field, value) => {
-        setAddress(prevState => ({
-            ...prevState,
-            [field]: value,
-        }));
+        setAddress(prevState => ({ ...prevState, [field]: value }));
     };
 
     const cuisineOptions = [
         { label: 'Gujrati', value: 'Gujrati' },
-        { label: 'Maharashtrian ', value: 'Maharashtrian ' },
-        { label: 'Punjabi', value: 'Pinjabi' },
+        { label: 'Maharashtrian', value: 'Maharashtrian' },
+        { label: 'Punjabi', value: 'Punjabi' },
         { label: 'South Indian', value: 'South Indian' },
         { label: 'East Indian', value: 'East Indian' },
-        { label: 'Thai', value: 'thai' },
-        { label: 'Rajsthani', value: 'Rajsthani' },
+        { label: 'Chinese', value: 'Chinese' },
+        { label: 'Rajasthani', value: 'Rajasthani' },
     ];
 
     return (
@@ -105,65 +101,42 @@ const RestProfile = ({ navigation }) => {
 
                     <Formik
                         initialValues={{
-                            date: new Date(),
-                            time: new Date(),
-                            openTime: new Date(),  
-                            closeTime: new Date(), 
+                            openTime: new Date(new Date().setHours(10, 0, 0, 0)),
+                            closeTime: new Date(new Date().setHours(22, 0, 0, 0)),
                             no_of_guest: '',
                             specialRequest: '',
                             fullName: '',
-                            street: address.street,
-                            city: address.city,
-                            states: address.states,
-                            pinCode: address.pinCode,
-                            cuisine: '',
+                            street: '',
+                            city: '',
+                            states: '',
+                            pinCode: '',
+                            cuisine: null,
                         }}
                         validationSchema={restProfileSchema}
                         onSubmit={(values, { setSubmitting }) => {
-                            const formattedValues = {
-                                ...values,
-                                date: values.date.toDateString(),
-                                time: formatTime(values.time),
-                                openTime: formatTime(values.openTime),
-                                closeTime: formatTime(values.closeTime)
+                            const newRestaurant = {
+                                id: Date.now().toString(),
+                                name: values.fullName,
+                                cuisine: values.cuisine,
+                                capacity: values.no_of_guest,
+                                timing: `${formatTime(values.openTime)} - ${formatTime(values.closeTime)}`,
+                                address: `${values.street}, ${values.city}, ${values.states} ${values.pinCode}`
                             };
-                        
-                            if (!values.fullName || !values.no_of_guest || !values.specialRequest) {
-                                Alert.alert('Error', 'Please fill all fields');
-                                setSubmitting(false);
-                            } else {
-                                const newRestaurant = {
-                                    id: Date.now().toString(),
-                                    name: values.fullName,
-                                    cuisine: values.cuisine,
-                                    capacity: values.no_of_guest,
-                                    timing: `${formatTime(values.openTime)} - ${formatTime(values.closeTime)}`,
-                                    address: `${values.street}, ${values.city}, ${values.states} ${values.pinCode}`
-                                  };
-                                Alert.alert(
-                                    "Reservation Confirmed", 
-                                    `Hi ${values.fullName}, Your reservation for ${values.no_of_guest} guests is confirmed!`,
-                                    [
-                                        { 
-                                            text: "OK", 
-                                            onPress: () => navigation.navigate('RestList',{newRestaurant: {
-                                                id: Date.now().toString(),
-                                                name: values.fullName,
-                                                cuisine: values.cuisine,
-                                                capacity: values.no_of_guest,
-                                                timing: `${formatTime(values.openTime)} - ${formatTime(values.closeTime)}`,
-                                                address: `${values.street}, ${values.city}, ${values.states} ${values.pinCode}`
-                                              }
-                                            })
-                                        }
-                                    ]
-                                );
-                                setSubmitting(false);
-                            }
+                            
+                            Alert.alert(
+                                "Reservation Confirmed",
+                                `Hi ${values.fullName}, Your reservation for ${values.no_of_guest} guests is confirmed!`,
+                                [{
+                                    text: "OK",
+                                    onPress: () => navigation.navigate('RestList')
+                                }]
+                            );
+                            setSubmitting(false);
                         }}
-                                 >
-                        {({ handleChange, handleBlur, handleSubmit, values, setFieldValue, isSubmitting, errors, touched}) => (
+                    >
+                        {({ handleChange, handleBlur, handleSubmit, values, setFieldValue, setFieldTouched, isSubmitting, errors, touched }) => (
                             <StyledFormArea>
+                                {/* Restaurant Name Input */}
                                 <MyTextInput
                                     label="Restaurant Name"
                                     icon="person"
@@ -175,48 +148,37 @@ const RestProfile = ({ navigation }) => {
                                     value={values.fullName}
                                 />
 
-                                <StyledInputLabel>Cuisine</StyledInputLabel>
-                                <RNPickerSelect
-                                    placeholder={{
-                                        label: 'Select Cuisine...',
-                                        value: null,
-                                    }}
-                                    onValueChange={handleChange('cuisine')}
-                                    onBlur={handleBlur('cuisine')}
-                                    value={values.cuisine}
-                                    items={cuisineOptions}
-                                    style={{
-                                        inputAndroid: {
-                                            fontSize: 18,
-                                            paddingVertical: 12,
-                                            paddingHorizontal: 10,
-                                            borderWidth: 1,
-                                            height: 60,
-                                            borderColor: darkLight,
-                                            borderRadius: 4,
-                                            color: darkLight,
-                                            paddingRight: 30,
-                                            backgroundColor: '#e0e0e0',
-                                        },
-                                    }}
-                                />
-                                {/* After RNPickerSelect */}
-                                {errors.cuisine && touched.cuisine && (
-                                 <Text style={styles.errorText}>{errors.cuisine}</Text>
-                                 )}
+                                {/* Cuisine Picker */}
+                                <View style={{ marginBottom: 15 }}>
+                                    <StyledInputLabel>Cuisine</StyledInputLabel>
+                                    <RNPickerSelect
+                                        placeholder={{ label: 'Select Cuisine...', value: null }}
+                                        onValueChange={handleChange('cuisine')}
+                                        onClose={() => handleBlur('cuisine')}
+                                        value={values.cuisine}
+                                        items={cuisineOptions}
+                                        style={{
+                                            inputIOS: styles.pickerInput,
+                                            inputAndroid: styles.pickerInput,
+                                            placeholder: { color: darkLight },
+                                        }}
+                                    />
+                                    {errors.cuisine && touched.cuisine && (
+                                        <Text style={styles.errorText}>{errors.cuisine}</Text>
+                                    )}
+                                </View>
 
+                                {/* Time Pickers */}
                                 <MyTextInput
                                     label="Open Time"
                                     icon="clock"
                                     error={touched.openTime && errors.openTime}
                                     placeholder="HH:MM AM"
-                                    placeholderTextColor={darkLight}
-                                    value={formatTime(values.openTime)}  
-                                    // onChangeText={handleChange('openTime')}
-                                    onBlur={handleBlur('openTime')}
+                                    value={formatTime(values.openTime)}
                                     onPress={() => {
                                         setCurrentPickerType('open');
                                         setPickerVisibility(true);
+                                        setFieldTouched('openTime', true);
                                     }}
                                 />
 
@@ -225,73 +187,34 @@ const RestProfile = ({ navigation }) => {
                                     icon="clock"
                                     error={touched.closeTime && errors.closeTime}
                                     placeholder="HH:MM PM"
-                                    placeholderTextColor={darkLight}
-                                    value={formatTime(values.closeTime)} 
-                                    // onChangeText={handleChange('closeTime')}
-                                    onBlur={handleBlur('closeTime')}
+                                    value={formatTime(values.closeTime)}
                                     onPress={() => {
                                         setCurrentPickerType('close');
                                         setPickerVisibility(true);
+                                        setFieldTouched('closeTime', true);
                                     }}
                                 />
 
-                                <MyTextInput
-                                    label="Street Address"
-                                    icon="location"
-                                    error={touched.street && errors.street}
-                                    placeholder="Street"
-                                    placeholderTextColor={darkLight}
-                                    onChangeText={(value) => {
-                                        handleChange('street')(value);
-                                        handleAddressChange('street', value);
-                                    }}
-                                    onBlur={handleBlur('street')}
-                                    value={values.street}
-                                />
+                                {/* Address Fields */}
+                                {['street', 'city', 'states', 'pinCode'].map((field) => (
+                                    <MyTextInput
+                                        key={field}
+                                        label={field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')}
+                                        icon="location"
+                                        error={touched[field] && errors[field]}
+                                        placeholder={field === 'pinCode' ? '12345' : field}
+                                        placeholderTextColor={darkLight}
+                                        onChangeText={(value) => {
+                                            handleChange(field)(value);
+                                            handleAddressChange(field, value);
+                                        }}
+                                        onBlur={handleBlur(field)}
+                                        value={values[field]}
+                                        keyboardType={field === 'pinCode' ? 'numeric' : 'default'}
+                                    />
+                                ))}
 
-                                <MyTextInput
-                                    label="City"
-                                    icon="location"
-                                    error={touched.city && errors.city}
-                                    placeholder="City"
-                                    placeholderTextColor={darkLight}
-                                    onChangeText={(value) => {
-                                        handleChange('city')(value);
-                                        handleAddressChange('city', value);
-                                    }}
-                                    onBlur={handleBlur('city')}
-                                    value={values.city}
-                                />
-
-                                <MyTextInput
-                                    label="State"
-                                    icon="location"
-                                    error={touched.states && errors.states}
-                                    placeholder="State"
-                                    placeholderTextColor={darkLight}
-                                    onChangeText={(value) => {
-                                        handleChange('states')(value);
-                                        handleAddressChange('states', value);
-                                    }}
-                                    onBlur={handleBlur('states')}
-                                    value={values.states}
-                                />
-
-                                <MyTextInput
-                                    label="Postal Code"
-                                    icon="location"
-                                    error={touched.pinCode && errors.pinCode}
-                                    placeholder="12345"
-                                    placeholderTextColor={darkLight}
-                                    onChangeText={(value) => {
-                                        handleChange('pinCode')(value);
-                                        handleAddressChange('pinCode', value);
-                                    }}
-                                    onBlur={handleBlur('pinCode')}
-                                    value={values.pinCode}
-                                    keyboardType="numeric"
-                                />
-
+                                {/* Capacity Input */}
                                 <MyTextInput
                                     label="Capacity of Guests"
                                     icon="people"
@@ -300,14 +223,15 @@ const RestProfile = ({ navigation }) => {
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('no_of_guest')}
                                     onBlur={handleBlur('no_of_guest')}
-                                    value={values.no_of_guest}
+                                    value={values.no_of_guest.toString()}
                                     keyboardType="numeric"
                                 />
 
+                                {/* Special Request Input */}
                                 <MyTextInput
                                     label="Special Feature"
                                     icon="pencil"
-                                    placeholder="special feature"
+                                    placeholder="Special feature"
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('specialRequest')}
                                     onBlur={handleBlur('specialRequest')}
@@ -315,6 +239,7 @@ const RestProfile = ({ navigation }) => {
                                     multiline
                                 />
 
+                                {/* Submit Button */}
                                 {!isSubmitting ? (
                                     <StyledButton onPress={handleSubmit}>
                                         <ButtonText>Reserve</ButtonText>
@@ -325,18 +250,21 @@ const RestProfile = ({ navigation }) => {
                                     </StyledButton>
                                 )}
 
+                                {/* Time Picker Modal */}
                                 <DateTimePickerModal
                                     isVisible={isPickerVisible}
                                     mode="time"
                                     onConfirm={(selectedTime) => {
-                                        if (currentPickerType === 'open') {
-                                            setFieldValue('openTime', selectedTime);
-                                        } else {
-                                            setFieldValue('closeTime', selectedTime);
-                                        }
+                                        const field = currentPickerType === 'open' ? 'openTime' : 'closeTime';
+                                        setFieldValue(field, selectedTime);
+                                        setFieldTouched(field, true);
                                         setPickerVisibility(false);
                                     }}
-                                    onCancel={() => setPickerVisibility(false)}
+                                    onCancel={() => {
+                                        setPickerVisibility(false);
+                                        const field = currentPickerType === 'open' ? 'openTime' : 'closeTime';
+                                        setFieldTouched(field, true);
+                                    }}
                                     date={currentPickerType === 'open' ? values.openTime : values.closeTime}
                                     headerTextIOS={`Select ${currentPickerType === 'open' ? 'Opening' : 'Closing'} Time`}
                                 />
@@ -348,14 +276,9 @@ const RestProfile = ({ navigation }) => {
         </KeyboardAvoidingWrapper>
     );
 };
-RestProfile.propTypes = {
-    navigation: PropTypes.object,
-};
 
-import { ErrorMessage } from 'formik';
-
-const MyTextInput = ({ label, icon,error, onPress, ...props }) => (
-    <View>
+const MyTextInput = ({ label, icon, error, onPress, ...props }) => (
+    <View style={{ marginBottom: 15 }}>
         <LeftIcon>
             <Octicons name={icon} size={30} color={brand} />
         </LeftIcon>
@@ -363,40 +286,45 @@ const MyTextInput = ({ label, icon,error, onPress, ...props }) => (
         <TouchableOpacity onPress={onPress}>
             <StyledTextInput
                 {...props}
-                editable={!!props.onChangeText} 
-                style={[props.style,
-                     !props.onChangeText && { color: darkLight }]}
+                editable={!!props.onChangeText}
+                style={[
+                    props.style,
+                    !props.onChangeText && { color: darkLight },
+                    error && styles.inputError
+                ]}
             />
         </TouchableOpacity>
-        {/* <ErrorMessage>
-            {msg => <Text style = {{ color: 'red', fontSize: 12 }}>{msg}</Text>}
-        </ErrorMessage> */}
-        {error && <Text style={styles.errorText}>
-            {error}
-        </Text> }
+        {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
 );
 
-export default RestProfile;
-
-MyTextInput.propTypes = {
-    label: PropTypes.string,
-    icon: PropTypes.string,
-    onPress: PropTypes.func,
-    onChangeText: PropTypes.func,
-    style: PropTypes.object,
-  };
-
-  const styles = StyleSheet.create({
+const styles = StyleSheet.create({
     errorText: {
-      color: 'red',
-      fontSize: 12,
-      marginTop: 4,
-      marginLeft: 10,
+        color: 'red',
+        fontSize: 12,
+        marginTop: 4,
+        marginLeft: 10
     },
-    pickerError: {
-      borderColor: 'red',
-      borderWidth: 1,
-      borderRadius: 4,
+    pickerInput: {
+        fontSize: 18,
+        paddingVertical: 12,
+        paddingHorizontal: 10,
+        borderWidth: 1,
+        height: 60,
+        borderColor: darkLight,
+        borderRadius: 4,
+        color: darkLight,
+        paddingRight: 30,
+        backgroundColor: '#e0e0e0',
+    },
+    inputError: {
+        borderColor: 'red',
+        borderWidth: 1
     }
-  });
+});
+
+RestProfile.propTypes = {
+    navigation: PropTypes.object.isRequired,
+};
+
+export default RestProfile;
