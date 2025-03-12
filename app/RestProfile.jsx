@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Formik } from 'formik';
-import { Octicons } from "@expo/vector-icons";
+import { collection, addDoc } from 'firebase/firestore'; 
+import { getAuth } from 'firebase/auth';
+import { Octicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import RNPickerSelect from 'react-native-picker-select';
 import {
@@ -21,6 +23,8 @@ import { View, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, Text } fr
 import KeyboardAvoidingWrapper from '../components/KeyboardAvoidingWrapper';
 import PropTypes from 'prop-types';
 import * as yup from 'yup';
+import { useNavigation } from 'expo-router';
+import { firestore } from '../app/firebaseConfig'; // Import the initialized Firestore instance
 
 const { brand, darkLight, primary } = Colors;
 
@@ -68,6 +72,8 @@ const restProfileSchema = yup.object().shape({
 });
 
 const RestProfile = ({ navigation }) => {
+    const auth = getAuth();
+    const user = auth.currentUser;
     const [isPickerVisible, setPickerVisibility] = useState(false);
     const [currentPickerType, setCurrentPickerType] = useState('open');
     const [address, setAddress] = useState({
@@ -76,6 +82,36 @@ const RestProfile = ({ navigation }) => {
         states: '',
         pinCode: '',
     });
+
+    const handleSubmit = async (values, { setSubmitting }) => {
+        const newRestaurant = {
+            id: Date.now().toString(),
+            name: values.fullName,
+            cuisine: values.cuisine,
+            capacity: values.no_of_guest,
+            timing: `${formatTime(values.openTime)} - ${formatTime(values.closeTime)}`,
+            address: `${values.street}, ${values.city}, ${values.states} ${values.pinCode}`,
+            ownerId: user.uid, // Add the owner's UID
+        };
+
+        try {
+            // Add the new restaurant to Firestore
+            await addDoc(collection(firestore, 'restaurants'), newRestaurant);
+            setSubmitting(false);
+
+            Alert.alert(
+                "Reservation Confirmed",
+                `Hi ${values.fullName}, Your reservation for ${values.no_of_guest} guests is confirmed!`,
+                [{
+                    text: "OK",
+                    onPress: () => navigation.goBack()
+                }]
+            );
+        } catch (error) {
+            console.error("Error adding restaurant: ", error);
+            Alert.alert("Error", "Failed to add restaurant. Please try again.");
+        }
+    };
 
     const handleAddressChange = (field, value) => {
         setAddress(prevState => ({ ...prevState, [field]: value }));
@@ -113,26 +149,7 @@ const RestProfile = ({ navigation }) => {
                             cuisine: null,
                         }}
                         validationSchema={restProfileSchema}
-                        onSubmit={(values, { setSubmitting }) => {
-                            const newRestaurant = {
-                                id: Date.now().toString(),
-                                name: values.fullName,
-                                cuisine: values.cuisine,
-                                capacity: values.no_of_guest,
-                                timing: `${formatTime(values.openTime)} - ${formatTime(values.closeTime)}`,
-                                address: `${values.street}, ${values.city}, ${values.states} ${values.pinCode}`
-                            };
-                            
-                            Alert.alert(
-                                "Reservation Confirmed",
-                                `Hi ${values.fullName}, Your reservation for ${values.no_of_guest} guests is confirmed!`,
-                                [{
-                                    text: "OK",
-                                    onPress: () => navigation.navigate('RestList')
-                                }]
-                            );
-                            setSubmitting(false);
-                        }}
+                        onSubmit={handleSubmit}
                     >
                         {({ handleChange, handleBlur, handleSubmit, values, setFieldValue, setFieldTouched, isSubmitting, errors, touched }) => (
                             <StyledFormArea>
@@ -141,7 +158,7 @@ const RestProfile = ({ navigation }) => {
                                     label="Restaurant Name"
                                     icon="person"
                                     error={touched.fullName && errors.fullName}
-                                    placeholder="Durga Cafe"
+                                    placeholder="Name"
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('fullName')}
                                     onBlur={handleBlur('fullName')}
@@ -158,7 +175,6 @@ const RestProfile = ({ navigation }) => {
                                         value={values.cuisine}
                                         items={cuisineOptions}
                                         style={{
-                                            inputIOS: styles.pickerInput,
                                             inputAndroid: styles.pickerInput,
                                             placeholder: { color: darkLight },
                                         }}
@@ -259,6 +275,7 @@ const RestProfile = ({ navigation }) => {
                                         setFieldValue(field, selectedTime);
                                         setFieldTouched(field, true);
                                         setPickerVisibility(false);
+                                        validateForm();
                                     }}
                                     onCancel={() => {
                                         setPickerVisibility(false);
@@ -328,3 +345,37 @@ RestProfile.propTypes = {
 };
 
 export default RestProfile;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// rules_version = '2';
+
+// service cloud.firestore {
+//   match /databases/{database}/documents {
+
+//     // This rule allows anyone with your Firestore database reference to view, edit,
+//     // and delete all data in your Firestore database. It is useful for getting
+//     // started, but it is configured to expire after 30 days because it
+//     // leaves your app open to attackers. At that time, all client
+//     // requests to your Firestore database will be denied.
+//     //
+//     // Make sure to write security rules for your app before that time, or else
+//     // all client requests to your Firestore database will be denied until you Update
+//     // your rules
+//     match /{document=**} {
+//       allow read, write: if request.time < timestamp.date(2025, 2, 21);
+//     }
+//   }
+// }

@@ -14,6 +14,8 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { NavigationContainer } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { getFirestore, collection,query, onSnapshot } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 import * as Location from "expo-location";
 import RestList from '../app/RestList'; 
 import O_Login from '../app/O_Login'; 
@@ -49,6 +51,12 @@ const SettingsScreen = () => (
 const RestaurantSearch = (navigation, route) => {
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(true);
+  const [restaurant, setRestaurants] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const Auth = getAuth();
+  const user = Auth.currentUser;
+const firestore = getFirestore();
 
   useEffect(() => {
     const getLocation = async () => {
@@ -73,6 +81,21 @@ const RestaurantSearch = (navigation, route) => {
 
     getLocation();
   }, []);
+
+  useEffect(() => {
+    const q =query(collection(firestore, 'restaurants'));
+    const unsubscribe = onSnapshot(q,(querySnapshot)=>{
+      const restaurantList = [];
+      querySnapshot.forEach((doc)=> {
+        restaurantList.push({id: doc.id,...doc.data() });
+      });
+      setRestaurants(restaurantList);
+    });
+    return() => unsubscribe();
+  },[]);
+  const filteredRestaurants = RestaurantSearch.filter((restaurant) => 
+  restaurant.name.toLowerCase().includes(searchQuery.toLowerCase())
+);
 
   return (
     <View style={styles.container}>
