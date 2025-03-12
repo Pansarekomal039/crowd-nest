@@ -166,7 +166,7 @@ const O_signup = ({ navigation }) => {
                                     setHidePassword={setHidePassword}
                                 />
 
-                                <MsgBox type={messageType}>{message}</MsgBox>
+                                 <MsgBox type={messageType}>{message}</MsgBox>
 
                                 {!isSubmitting ? (
                                     <StyledButton onPress={handleSubmit}>

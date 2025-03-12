@@ -30,7 +30,7 @@ import {
     MsgBox, 
     Line,
     ExtraView, 
-    ExtraText, 
+    ExtraText,  
     TextLinkContent,
     TextLink
 } from '../components/style';

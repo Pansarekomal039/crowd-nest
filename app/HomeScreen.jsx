@@ -8,7 +8,7 @@ const HomeScreen = () => {
     </View>
   )
 }
-
+ 
 export default HomeScreen
 
 const styles = StyleSheet.create({})

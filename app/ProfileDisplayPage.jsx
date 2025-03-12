@@ -12,7 +12,7 @@ const ProfileDetailsPage = ({ route }) => {
       <Text>Capacity: {profile.no_of_guest} Guests</Text>
       <Text>Open Time: {profile.openTime}</Text>
       <Text>Close Time: {profile.closeTime}</Text>
-      <Text>Special Requests: {profile.specialRequest}</Text>
+      <Text>Special  Requests: {profile.specialRequest}</Text>
     </View>
   );
 };

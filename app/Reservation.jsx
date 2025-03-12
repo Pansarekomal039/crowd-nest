@@ -13,7 +13,7 @@ import {
     Colors,
     StyledButton,
     ButtonText,
-    Line,
+    Line, 
     PageLogo,
 } from '../components/style';
 import { View, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';

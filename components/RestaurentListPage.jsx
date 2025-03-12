@@ -4,7 +4,7 @@ import {
     StyledContainer,
     PageTitle,
     Line,
-    StyledButton,
+    StyledButton, 
     ButtonText,
     Colors
 } from '../components/style';

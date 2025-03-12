@@ -4,7 +4,7 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  TouchableOpacity,
+  TouchableOpacity, 
   Image,
 } from 'react-native';
 import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';

@@ -24,7 +24,7 @@ import {
     StyledInputLabel, 
     StyledTextInput,
     RightIcon, 
-    Colors,
+    Colors, 
     StyledButton,
     ButtonText,
     MsgBox, 

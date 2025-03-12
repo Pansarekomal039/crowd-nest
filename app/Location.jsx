@@ -3,7 +3,7 @@ import {
   View,
   TextInput,
   Text,
-  ActivityIndicator,
+  ActivityIndicator, 
   Alert,
   StyleSheet,
   StatusBar,

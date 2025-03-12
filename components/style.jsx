@@ -152,7 +152,7 @@ margin-top: 1px;
 margin-bottom: 1px;
 ${(props) => props.google == true && `
     padding: 20px;
-    `}
+    `} 
 `;
 
 export const MsgBox = styled.Text`

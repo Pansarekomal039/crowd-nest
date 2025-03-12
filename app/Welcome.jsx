@@ -32,7 +32,7 @@ const Welcome = () => {
         <StyledButton onPress={() => navigation.navigate('O_Login')}>
           <ButtonText1>Get Started</ButtonText1>
         
-        </StyledButton>
+        </StyledButton> 
         <Line />
       </InnerContainer>
     </StyledContainer>

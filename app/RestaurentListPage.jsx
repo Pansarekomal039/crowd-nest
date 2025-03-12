@@ -7,7 +7,7 @@ const RestaurantListPage = ({ navigation }) => {
   // Add some mock data to show
   React.useEffect(() => {
     const profiles = [
-      {
+      { 
         id: '1',
         restaurantName: 'Durga Cafe',
         cuisine: 'Indian',

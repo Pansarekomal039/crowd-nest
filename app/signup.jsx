@@ -114,7 +114,7 @@ const Signup = ({ navigation }) => {
                                     onChangeText={handleChange('fullName')}
                                     onBlur={handleBlur('fullName')}
                                     value={values.fullName}
-                                />
+                                 />
 
                                 <MyTextInput
                                     label="Email Address"

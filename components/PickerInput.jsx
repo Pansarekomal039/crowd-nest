@@ -8,7 +8,7 @@ import { StyledTextInput, StyledInputLabel, LeftIcon, RightIcon, StyledButton, B
 
 const { brand, darkLight, primary } = Colors;
 
-const PickerInput = ({
+const PickerInput = ({ 
   label,
   icon,
   items,

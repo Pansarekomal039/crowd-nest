@@ -59,7 +59,7 @@ const RestList = () => {
     </StyledContainer>
   );
 };
-
+  
 
 RestList.propTypes = {
   navigation: PropTypes.object.isRequired,

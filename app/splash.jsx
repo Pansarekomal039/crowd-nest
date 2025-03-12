@@ -1,6 +1,6 @@
-import { View ,Image} from 'react-native'
-import { StyleSheet,Text} from 'react-native'
-import React from 'react'
+import { View ,Image} from 'react-native';
+import { StyleSheet,Text} from 'react-native';
+import React from 'react' ;
 import Entypo from '@expo/vector-icons/Entypo';
 import {useEffect} from 'react';
 import * as SplashScreen from 'expo-splash-screen';

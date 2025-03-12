@@ -31,6 +31,7 @@ const firestore = getFirestore(app);
 const db = getFirestore(app);
 const storage =getStorage(app)
 let analytics;
+
 isSupported()
   .then((supported) => {
     if (supported) {

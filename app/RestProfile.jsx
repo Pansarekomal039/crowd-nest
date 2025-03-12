@@ -313,7 +313,7 @@ const MyTextInput = ({ label, icon, error, onPress, ...props }) => (
         </TouchableOpacity>
         {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
-);
+); 
 
 const styles = StyleSheet.create({
     errorText: {
